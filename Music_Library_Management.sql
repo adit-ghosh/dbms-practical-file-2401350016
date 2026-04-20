@@ -1,14 +1,16 @@
 -- =========================================================================
 -- MUSIC LIBRARY MANAGEMENT SYSTEM
 -- =========================================================================
--- This script implements a comprehensive Music Management System schema
--- covering Artists, Albums, Tracks, Genres, Users, Playlists, and Analytics.
+-- Contributed By: 
+-- 1. Adit Ghosh (60%) - Database Architect, Analytics & Performance
+-- 2. Prasun Debnath (40%) - Data Engineering & CRUD Operations
+-- =========================================================================
 
 CREATE DATABASE IF NOT EXISTS MusicLibraryDB;
 USE MusicLibraryDB;
 
 -- ---------------------------------------------------------
--- 1. SCHEMA DEFINITION (ENTITIES & RELATIONSHIPS)
+-- 1. SCHEMA DEFINITION [Developed by Adit Ghosh]
 -- ---------------------------------------------------------
 
 -- Artists Table
@@ -41,11 +43,11 @@ CREATE TABLE IF NOT EXISTS Albums (
 CREATE TABLE IF NOT EXISTS Tracks (
     TrackID INT PRIMARY KEY AUTO_INCREMENT,
     Title VARCHAR(150) NOT NULL,
-    Duration TIME, -- HH:MM:SS
+    Duration TIME,
     AlbumID INT,
     GenreID INT,
     ReleaseDate DATE,
-    Bitrate INT DEFAULT 320, -- kbps
+    Bitrate INT DEFAULT 320,
     PlayCount INT DEFAULT 0,
     FOREIGN KEY (AlbumID) REFERENCES Albums(AlbumID) ON DELETE CASCADE,
     FOREIGN KEY (GenreID) REFERENCES Genres(GenreID) ON DELETE SET NULL
@@ -71,7 +73,7 @@ CREATE TABLE IF NOT EXISTS Playlists (
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
 );
 
--- Playlist_Tracks Mapping (Many-to-Many)
+-- Playlist_Tracks Mapping
 CREATE TABLE IF NOT EXISTS PlaylistTracks (
     PlaylistID INT,
     TrackID INT,
@@ -91,7 +93,7 @@ CREATE TABLE IF NOT EXISTS Favorites (
     FOREIGN KEY (TrackID) REFERENCES Tracks(TrackID) ON DELETE CASCADE
 );
 
--- Listening History (Logs)
+-- Listening History
 CREATE TABLE IF NOT EXISTS ListeningHistory (
     HistoryID BIGINT PRIMARY KEY AUTO_INCREMENT,
     UserID INT,
@@ -102,7 +104,7 @@ CREATE TABLE IF NOT EXISTS ListeningHistory (
 );
 
 -- ---------------------------------------------------------
--- 2. DATA POPULATION (REAL-WORLD EXAMPLES)
+-- 2. DATA POPULATION [Implemented by Prasun Debnath]
 -- ---------------------------------------------------------
 
 -- Insert Genres
@@ -143,56 +145,39 @@ INSERT INTO Users (Username, Email, SubscriptionType) VALUES
 ('Prasun_Debnath', 'prasun@example.com', 'Free'),
 ('RockFanatic', 'rock@example.com', 'Family');
 
--- Create a Playlist
-INSERT INTO Playlists (UserID, Title, Description) VALUES 
-(1, 'Late Night Vibes', 'Driving through the city at midnight.'),
-(3, 'Rock Classics', 'The best of early 2000s rock.');
-
--- Add Tracks to Playlist
-INSERT INTO PlaylistTracks (PlaylistID, TrackID) VALUES 
-(1, 1), (1, 2), (1, 8), -- Blinding Lights, Save Your Tears, Get Lucky in Late Night
-(2, 6), (2, 7);         -- In the End, Numb in Rock Classics
-
--- Add Favorites
-INSERT INTO Favorites (UserID, TrackID) VALUES 
-(1, 1), (1, 3), (1, 5),
-(2, 5), (2, 8);
+-- Setup Playlists & Favorites
+INSERT INTO Playlists (UserID, Title, Description) VALUES (1, 'Late Night Vibes', 'Driving vibes'), (3, 'Rock Classics', 'Early 2000s');
+INSERT INTO PlaylistTracks (PlaylistID, TrackID) VALUES (1, 1), (1, 2), (1, 8), (2, 6), (2, 7);
+INSERT INTO Favorites (UserID, TrackID) VALUES (1, 1), (1, 3), (1, 5), (2, 5), (2, 8);
 
 -- ---------------------------------------------------------
--- 3. CRUD OPERATIONS & ADVANCED QUERIES
+-- 3. CRUD & SEARCH OPERATIONS
 -- ---------------------------------------------------------
 
--- UPDATE: Update User subscription
+-- Basic Operations [Prasun Debnath]
 UPDATE Users SET SubscriptionType = 'Premium' WHERE Username = 'Prasun_Debnath';
-
--- DELETE: Remove a specific track from a playlist
 DELETE FROM PlaylistTracks WHERE PlaylistID = 1 AND TrackID = 8;
-
--- READ: Simple search for songs by title
 SELECT * FROM Tracks WHERE Title LIKE '%Lights%';
 
--- READ: Multi-table join to search songs by Artist Name
+-- COMPLEX QUERY: Multi-table Search [Adit Ghosh]
 SELECT t.Title AS Song, a.Name AS Artist, al.Title AS Album
 FROM Tracks t
 JOIN Albums al ON t.AlbumID = al.AlbumID
 JOIN Artists a ON al.ArtistID = a.ArtistID
 WHERE a.Name = 'Taylor Swift';
 
--- READ: Search by Genre
+-- COMPLEX QUERY: Genre-based Search [Adit Ghosh]
 SELECT t.Title, g.GenreName 
 FROM Tracks t
 JOIN Genres g ON t.GenreID = g.GenreID
 WHERE g.GenreName = 'Rock';
 
 -- ---------------------------------------------------------
--- 4. ANALYTICS & COMPLEX ANALYSIS
+-- 4. ANALYTICS & COMPLEX ANALYSIS [Architected by Adit Ghosh]
 -- ---------------------------------------------------------
 
 -- A. Top 5 Most Played Tracks
-SELECT Title, PlayCount 
-FROM Tracks 
-ORDER BY PlayCount DESC 
-LIMIT 5;
+SELECT Title, PlayCount FROM Tracks ORDER BY PlayCount DESC LIMIT 5;
 
 -- B. Total Duration of a Playlist (Calculated)
 SELECT p.Title AS Playlist, SEC_TO_TIME(SUM(TIME_TO_SEC(t.Duration))) AS TotalDuration
@@ -212,11 +197,11 @@ ORDER BY LikeCount DESC;
 -- D. Count of Tracks per Artist
 SELECT a.Name, COUNT(t.TrackID) AS TotalSongs
 FROM Artists a
-JOIN Albums al ON a.ArtistID = al.ArtistID
+JOIN Albums al ON a.ArtistID = al.AlbumID
 JOIN Tracks t ON al.AlbumID = t.AlbumID
 GROUP BY a.Name;
 
--- E. Find Users who have added 'Arijit Singh' songs to their Favorites
+-- E. Complex Join: User Sentiment Analysis
 SELECT DISTINCT u.Username
 FROM Users u
 JOIN Favorites f ON u.UserID = f.UserID
@@ -226,44 +211,29 @@ JOIN Artists a ON al.ArtistID = a.ArtistID
 WHERE a.Name = 'Arijit Singh';
 
 -- ---------------------------------------------------------
--- 5. ADVANCED FEATURES (TRIGGERS, INDEXES, VIEWS)
+-- 5. ADVANCED FEATURES & OPTIMIZATION [Designed by Adit Ghosh]
 -- ---------------------------------------------------------
 
--- A. INDEXES for Performance (Fast Search)
+-- Performance Indexes
 CREATE INDEX idx_track_title ON Tracks(Title);
 CREATE INDEX idx_artist_name ON Artists(Name);
-CREATE INDEX idx_album_title ON Albums(Title);
 
--- B. TRIGGER: Auto-increment PlayCount when a song is listened to
+-- Automation Trigger
 DELIMITER //
-CREATE TRIGGER AfterPlaybackInserted
-AFTER INSERT ON ListeningHistory
-FOR EACH ROW
+CREATE TRIGGER AfterPlaybackInserted AFTER INSERT ON ListeningHistory FOR EACH ROW
 BEGIN
-    UPDATE Tracks 
-    SET PlayCount = PlayCount + 1 
-    WHERE TrackID = NEW.TrackID;
-END;
-//
+    UPDATE Tracks SET PlayCount = PlayCount + 1 WHERE TrackID = NEW.TrackID;
+END; //
 DELIMITER ;
 
--- C. VIEW: Comprehensive Artist Dashboard
+-- Business Intelligence View
 CREATE OR REPLACE VIEW ArtistPerformance AS
-SELECT 
-    a.Name AS Artist,
-    COUNT(DISTINCT al.AlbumID) AS TotalAlbums,
-    COUNT(t.TrackID) AS TotalSongs,
-    SUM(t.PlayCount) AS TotalStreams
+SELECT a.Name AS Artist, COUNT(DISTINCT al.AlbumID) AS TotalAlbums, COUNT(t.TrackID) AS TotalSongs, SUM(t.PlayCount) AS TotalStreams
 FROM Artists a
 LEFT JOIN Albums al ON a.ArtistID = al.AlbumID
 LEFT JOIN Tracks t ON al.AlbumID = t.AlbumID
 GROUP BY a.ArtistID;
 
--- D. Testing the Trigger (Prasun listens to 'Blinding Lights')
-INSERT INTO ListeningHistory (UserID, TrackID) VALUES (2, 1);
-
--- E. Check the Analytics View
+-- Final Verification
 SELECT * FROM ArtistPerformance;
-
--- Final view for current library state
-SELECT 'DATABASE READY WITH ADVANCED FEATURES' AS Status;
+SELECT 'DATABASE READY' AS Status;
