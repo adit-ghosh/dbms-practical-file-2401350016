@@ -1,9 +1,7 @@
 -- =========================================================================
 -- MUSIC LIBRARY MANAGEMENT SYSTEM
 -- =========================================================================
--- Contributed By: 
--- 1. Adit Ghosh (60%) - Database Architect, Analytics & Performance
--- 2. Prasun Debnath (40%) - Data Engineering & CRUD Operations
+-- Contributors: Adit Ghosh & Prasun Debnath
 -- =========================================================================
 
 CREATE DATABASE IF NOT EXISTS MusicLibraryDB;
@@ -159,27 +157,27 @@ UPDATE Users SET SubscriptionType = 'Premium' WHERE Username = 'Prasun_Debnath';
 DELETE FROM PlaylistTracks WHERE PlaylistID = 1 AND TrackID = 8;
 SELECT * FROM Tracks WHERE Title LIKE '%Lights%';
 
--- COMPLEX QUERY: Multi-table Search [Adit Ghosh]
+-- Multi-table Search [Adit Ghosh]
 SELECT t.Title AS Song, a.Name AS Artist, al.Title AS Album
 FROM Tracks t
 JOIN Albums al ON t.AlbumID = al.AlbumID
 JOIN Artists a ON al.ArtistID = a.ArtistID
 WHERE a.Name = 'Taylor Swift';
 
--- COMPLEX QUERY: Genre-based Search [Adit Ghosh]
+-- Genre-based Search [Adit Ghosh]
 SELECT t.Title, g.GenreName 
 FROM Tracks t
 JOIN Genres g ON t.GenreID = g.GenreID
 WHERE g.GenreName = 'Rock';
 
 -- ---------------------------------------------------------
--- 4. ANALYTICS & COMPLEX ANALYSIS [Architected by Adit Ghosh]
+-- 4. ANALYTICS & MONITORING [Architected by Adit Ghosh]
 -- ---------------------------------------------------------
 
 -- A. Top 5 Most Played Tracks
 SELECT Title, PlayCount FROM Tracks ORDER BY PlayCount DESC LIMIT 5;
 
--- B. Total Duration of a Playlist (Calculated)
+-- B. Total Duration of a Playlist
 SELECT p.Title AS Playlist, SEC_TO_TIME(SUM(TIME_TO_SEC(t.Duration))) AS TotalDuration
 FROM Playlists p
 JOIN PlaylistTracks pt ON p.PlaylistID = pt.PlaylistID
@@ -201,7 +199,7 @@ JOIN Albums al ON a.ArtistID = al.AlbumID
 JOIN Tracks t ON al.AlbumID = t.AlbumID
 GROUP BY a.Name;
 
--- E. Complex Join: User Sentiment Analysis
+-- E. User Sentiment Analysis
 SELECT DISTINCT u.Username
 FROM Users u
 JOIN Favorites f ON u.UserID = f.UserID
