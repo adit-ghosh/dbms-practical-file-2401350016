@@ -1,0 +1,133 @@
+DROP DATABASE IF EXISTS College_Database;
+CREATE DATABASE IF NOT EXISTS College_Database;
+USE College_Database;
+
+DROP TABLE IF EXISTS Student;
+CREATE TABLE  Student (
+    USN VARCHAR(20) PRIMARY KEY,
+    SName VARCHAR(50),
+    Address VARCHAR(100),
+    Phone VARCHAR(15),
+    Gender CHAR(1)
+);
+
+DROP TABLE IF EXISTS Semsec;
+CREATE TABLE SemSec (
+    SSID VARCHAR(10) PRIMARY KEY,
+    Sem INT,
+    Sec CHAR(1)
+);
+
+DROP TABLE IF EXISTS Class;
+CREATE TABLE Class (
+    USN VARCHAR(20),
+    SSID VARCHAR(10),
+    PRIMARY KEY (USN, SSID),
+    FOREIGN KEY (USN) REFERENCES Student(USN)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (SSID) REFERENCES SemSec(SSID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Subjects;
+CREATE TABLE Subjects (
+    Subcode VARCHAR(10) PRIMARY KEY,
+    Title VARCHAR(50),
+    Sem INT,
+    Credits INT
+);
+
+DROP TABLE IF EXISTS IAMarks;
+CREATE TABLE IAMarks (
+    Subcode VARCHAR(10),
+    SSID VARCHAR(10),
+    Test1 INT,
+    Test2 INT,
+    Test3 INT,
+    FinalIA INT,
+    PRIMARY KEY (Subcode, SSID),
+    FOREIGN KEY (Subcode) REFERENCES Subjects(Subcode)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (SSID) REFERENCES SemSec(SSID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+DROP DATABASE IF EXISTS Company_Database;
+CREATE DATABASE IF NOT EXISTS Company_Database;
+USE Company_Database;
+
+DROP TABLE IF EXISTS Employee;
+CREATE TABLE Employee (
+    SSN VARCHAR(15) PRIMARY KEY,
+    Name VARCHAR(50),
+    Address VARCHAR(100),
+    Sex CHAR(1),
+    Salary DECIMAL(10,2),
+    Dno INT
+);
+
+DROP TABLE IF EXISTS Department;
+CREATE TABLE Department (
+    Dno INT PRIMARY KEY,
+    Dname VARCHAR(50),
+    MgrSSN VARCHAR(15),
+    MgrStartDate DATE,
+    
+    FOREIGN KEY (MgrSSN) REFERENCES Employee(SSN)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS DLocation;
+CREATE TABLE DLocation (
+    Dno INT,
+    Dloc VARCHAR(50),
+    PRIMARY KEY (Dno, Dloc),
+    
+    FOREIGN KEY (Dno) REFERENCES Department(Dno)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Project;
+CREATE TABLE Project (
+    Pno INT PRIMARY KEY,
+    Pname VARCHAR(50),
+    Plocation VARCHAR(50),
+    Dno INT,
+    
+    FOREIGN KEY (Dno) REFERENCES Department(Dno)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Works_on;
+CREATE TABLE Works_On (
+    SSN VARCHAR(15),
+    Pno INT,
+    Hours DECIMAL(5,2),
+    
+    PRIMARY KEY (SSN, Pno),
+    
+    FOREIGN KEY (SSN) REFERENCES Employee(SSN)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+        
+    FOREIGN KEY (Pno) REFERENCES Project(Pno)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+USE College_Database;
+ALTER TABLE Student ADD Email VARCHAR(50);
+ALTER TABLE Student CHANGE SName StudentName VARCHAR(50);
+
+USE Employee_Database;
+ALTER TABLE Employee MODIFY Salary DECIMAL(10,2) NOT NULL;
+DROP TABLE DLocation;
+
+
