@@ -140,7 +140,7 @@ INSERT INTO Tracks (Title, Duration, AlbumID, GenreID, PlayCount) VALUES
 -- Insert Users
 INSERT INTO Users (Username, Email, SubscriptionType) VALUES 
 ('Adit_Ghosh', 'adit@example.com', 'Premium'),
-('MusicLover99', 'lover@example.com', 'Free'),
+('Prasun_Debnath', 'prasun@example.com', 'Free'),
 ('RockFanatic', 'rock@example.com', 'Family');
 
 -- Create a Playlist
@@ -163,7 +163,7 @@ INSERT INTO Favorites (UserID, TrackID) VALUES
 -- ---------------------------------------------------------
 
 -- UPDATE: Update User subscription
-UPDATE Users SET SubscriptionType = 'Premium' WHERE Username = 'MusicLover99';
+UPDATE Users SET SubscriptionType = 'Premium' WHERE Username = 'Prasun_Debnath';
 
 -- DELETE: Remove a specific track from a playlist
 DELETE FROM PlaylistTracks WHERE PlaylistID = 1 AND TrackID = 8;
@@ -225,5 +225,45 @@ JOIN Albums al ON t.AlbumID = al.AlbumID
 JOIN Artists a ON al.ArtistID = a.ArtistID
 WHERE a.Name = 'Arijit Singh';
 
+-- ---------------------------------------------------------
+-- 5. ADVANCED FEATURES (TRIGGERS, INDEXES, VIEWS)
+-- ---------------------------------------------------------
+
+-- A. INDEXES for Performance (Fast Search)
+CREATE INDEX idx_track_title ON Tracks(Title);
+CREATE INDEX idx_artist_name ON Artists(Name);
+CREATE INDEX idx_album_title ON Albums(Title);
+
+-- B. TRIGGER: Auto-increment PlayCount when a song is listened to
+DELIMITER //
+CREATE TRIGGER AfterPlaybackInserted
+AFTER INSERT ON ListeningHistory
+FOR EACH ROW
+BEGIN
+    UPDATE Tracks 
+    SET PlayCount = PlayCount + 1 
+    WHERE TrackID = NEW.TrackID;
+END;
+//
+DELIMITER ;
+
+-- C. VIEW: Comprehensive Artist Dashboard
+CREATE OR REPLACE VIEW ArtistPerformance AS
+SELECT 
+    a.Name AS Artist,
+    COUNT(DISTINCT al.AlbumID) AS TotalAlbums,
+    COUNT(t.TrackID) AS TotalSongs,
+    SUM(t.PlayCount) AS TotalStreams
+FROM Artists a
+LEFT JOIN Albums al ON a.ArtistID = al.AlbumID
+LEFT JOIN Tracks t ON al.AlbumID = t.AlbumID
+GROUP BY a.ArtistID;
+
+-- D. Testing the Trigger (Prasun listens to 'Blinding Lights')
+INSERT INTO ListeningHistory (UserID, TrackID) VALUES (2, 1);
+
+-- E. Check the Analytics View
+SELECT * FROM ArtistPerformance;
+
 -- Final view for current library state
-SELECT 'DATABASE READY' AS Status;
+SELECT 'DATABASE READY WITH ADVANCED FEATURES' AS Status;
